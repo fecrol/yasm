@@ -1,4 +1,4 @@
-package com.github.fecrol.yasm.comon;
+package com.github.fecrol.yasm.comon.entities;
 
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
