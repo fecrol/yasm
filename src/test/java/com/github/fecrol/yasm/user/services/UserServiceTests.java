@@ -6,6 +6,7 @@ import com.github.fecrol.yasm.comon.exceptions.NotFoundException;
 import com.github.fecrol.yasm.user.entities.User;
 import com.github.fecrol.yasm.user.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("When interacting with the User Service")
 public class UserServiceTests {
 
     @Mock
@@ -33,7 +35,8 @@ public class UserServiceTests {
     }
 
     @Test
-    void shouldReturnUserWhenGettingByExistingId() {
+    @DisplayName("it should successfully retrieve a user on attempt to get user by existing ID")
+    void itShouldReturnUserWhenGettingByExistingId() {
         // given
         User existingUser = new User(UUID.randomUUID(), "some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
         when(userRepository.findById(existingUser.getId())).thenReturn(Optional.of(existingUser));
@@ -49,7 +52,8 @@ public class UserServiceTests {
     }
 
     @Test
-    void shouldThrowNotFoundExceptionWhenGettingByNotExistingId() {
+    @DisplayName("it should throw a Not Found Exception on attempt to get user by non existent ID")
+    void itShouldThrowNotFoundExceptionWhenGettingByNotExistingId() {
         // give
         UUID nonExistingUserId = UUID.randomUUID();
         // then
@@ -59,7 +63,8 @@ public class UserServiceTests {
     }
 
     @Test
-    void shouldBeAbleToCreateNewUserWhenEmailAndHandleAreUnique() {
+    @DisplayName("it should be able to create a new user with unique email and handle")
+    void itShouldBeAbleToCreateNewUserWhenEmailAndHandleAreUnique() {
         // given
         User newUser = new User(UUID.randomUUID(), "some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
         // when
@@ -72,7 +77,19 @@ public class UserServiceTests {
     }
 
     @Test
-    void shouldThrowConflictExceptionWhenUserWithEmailAlreadyExists() {
+    @DisplayName("it should throw a Bad Request Exception on attempt to create a new user with payload containing illegal fields")
+    void itShouldThrowBadRequestExceptionWhenIllegalFieldsProvided() {
+        // given
+        User newUser = new User(UUID.randomUUID(), "some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
+        // then
+        assertThatThrownBy(() -> userService.createNewUser(newUser))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Illegal fields provided: " + List.of("id"));
+    }
+
+    @Test
+    @DisplayName("it should throw a Conflict Exception on attempt to create new user with email that already exists")
+    void itShouldThrowConflictExceptionWhenUserWithEmailAlreadyExists() {
         // given
         User newUser = new User("some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(newUser));
@@ -83,7 +100,8 @@ public class UserServiceTests {
     }
 
     @Test
-    void shouldThrowConflictExceptionWhenUserWithHandleAlreadyExists() {
+    @DisplayName("it should throw a Conflict Exception on attempt to create new user with handle that already exists")
+    void itShouldThrowConflictExceptionWhenUserWithHandleAlreadyExists() {
         // given
         User newUser = new User("some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
         when(userRepository.findByHandle(anyString())).thenReturn(Optional.of(newUser));
@@ -94,12 +112,30 @@ public class UserServiceTests {
     }
 
     @Test
-    void shouldThrowBadRequestExceptionWhenIllegalFieldsProvided() {
+    @DisplayName("it should successfully update user detail for user with existing ID")
+    void itShouldSuccessfullyUpdateUserWithExistingId() {
         // given
-        User newUser = new User(UUID.randomUUID(), "some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
+        User existingUser = new User(UUID.randomUUID(), "some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(existingUser));
+        // when
+        existingUser.setEmail("new.email@fakemail.com");
+        userService.updateExistingUser(existingUser.getId(), existingUser);
+        // Then
+        ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(argumentCaptor.capture());
+        User updatedUser = argumentCaptor.getValue();
+        assertThat(updatedUser).isEqualTo(existingUser);
+        assertThat(updatedUser.getEmail()).isEqualTo(existingUser.getEmail());
+    }
+
+    @Test
+    @DisplayName("it should throw a Not Found Exception on attempt to update a user with non existent ID")
+    void itShouldThrowBadRequestExceptionWhenUpdatingUserWithNonExistentId() {
+        // given
+        User user = new User("some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
         // then
-        assertThatThrownBy(() -> userService.createNewUser(newUser))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessage("Illegal fields provided: " + List.of("id"));
+        assertThatThrownBy(() -> userService.updateExistingUser(user.getId(), user))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("User with id of " + user.getId() + " not found");
     }
 }
