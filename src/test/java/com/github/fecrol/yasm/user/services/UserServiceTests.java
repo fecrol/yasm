@@ -7,6 +7,7 @@ import com.github.fecrol.yasm.user.entities.User;
 import com.github.fecrol.yasm.user.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("When interacting with the User Service")
+@Tag("unit-test")
 public class UserServiceTests {
 
     @Mock
@@ -112,7 +114,7 @@ public class UserServiceTests {
     }
 
     @Test
-    @DisplayName("it should successfully update user detail for user with existing ID")
+    @DisplayName("it should successfully update user details for user with existing ID")
     void itShouldSuccessfullyUpdateUserWithExistingId() {
         // given
         User existingUser = new User(UUID.randomUUID(), "some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
@@ -135,6 +137,32 @@ public class UserServiceTests {
         User user = new User("some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
         // then
         assertThatThrownBy(() -> userService.updateExistingUser(user.getId(), user))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("User with id of " + user.getId() + " not found");
+    }
+
+    @Test
+    @DisplayName("it should successfully delete user details for user with existing ID")
+    void itShouldSuccessfullyDeleteUserWithExistentId() {
+        // given
+        User existingUser = new User(UUID.randomUUID(), "some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
+        when(userRepository.findById(any(UUID.class))).thenReturn(Optional.of(existingUser));
+        // when
+        userService.deleteExistingUser(existingUser.getId());
+        // then
+        ArgumentCaptor<User> argumentCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).delete(argumentCaptor.capture());
+        User deletedUser = argumentCaptor.getValue();
+        assertThat(deletedUser).isEqualTo(existingUser);
+    }
+
+    @Test
+    @DisplayName("it should throw a Not Found Exception on attempt to delete a user with non existent ID")
+    void itShouldThrowBadRequestExceptionWhenDeletingUserWithNonExistentId() {
+        // given
+        User user = new User("some.user@fakemail.com", "P@55w0rd123!", "some.fake.user");
+        // then
+        assertThatThrownBy(() -> userService.deleteExistingUser(user.getId()))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("User with id of " + user.getId() + " not found");
     }
