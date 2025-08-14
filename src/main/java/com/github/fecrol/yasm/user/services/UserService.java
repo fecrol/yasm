@@ -30,20 +30,24 @@ public class UserService {
     public User createNewUser(User newUser) {
         // Check no restricted fields have been set
         List<String> illegalFieldsList = new ArrayList<>();
-        if(newUser.getId() != null) illegalFieldsList.add("id");
-        if(!illegalFieldsList.isEmpty()) {
+
+        if (newUser.getId() != null) {
+            illegalFieldsList.add("id");
+        }
+
+        if (!illegalFieldsList.isEmpty()) {
             throw new BadRequestException("Illegal fields provided: " + illegalFieldsList);
         }
 
         // Check user with provided email does not already exist
         Optional<User> userWithNewUserEmail = userRepository.findByEmail(newUser.getEmail());
-        if(userWithNewUserEmail.isPresent()) {
+        if (userWithNewUserEmail.isPresent()) {
             throw new ConflictException("User with email " + newUser.getEmail() + " already exists");
         }
 
         // Check user with provided handle does not already exist
         Optional<User> userWithNewUserHandle = userRepository.findByHandle(newUser.getHandle());
-        if(userWithNewUserHandle.isPresent()) {
+        if (userWithNewUserHandle.isPresent()) {
             throw new ConflictException("User with handle " + newUser.getHandle() + " already exists");
         }
 
