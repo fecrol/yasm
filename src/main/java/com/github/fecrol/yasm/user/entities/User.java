@@ -1,6 +1,7 @@
 package com.github.fecrol.yasm.user.entities;
 
-import com.github.fecrol.yasm.comon.BaseEntity;
+import com.github.fecrol.yasm.comon.entities.BaseEntity;
+import com.github.fecrol.yasm.comon.entities.interfaces.UpdatableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -9,7 +10,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-public class User extends BaseEntity {
+public class User extends BaseEntity implements UpdatableEntity<User> {
 
     @Column(name = "email", nullable = false)
     private String email;
@@ -58,5 +59,12 @@ public class User extends BaseEntity {
 
     public void setHandle(String handle) {
         this.handle = handle;
+    }
+
+    @Override
+    public void updateUsing(User updatedUser) {
+        this.setEmail(updatedUser.getEmail());
+        this.setHandle(updatedUser.getHandle());
+        this.setPassword(updatedUser.getPassword());
     }
 }

@@ -1,7 +1,6 @@
-package com.github.fecrol.yasm.unit.respositories;
+package com.github.fecrol.yasm.user.repositories;
 
 import com.github.fecrol.yasm.user.entities.User;
-import com.github.fecrol.yasm.user.repositories.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
